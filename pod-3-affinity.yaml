@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-3
+  namespace: ns-2
+spec:
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - pod-1-label # Label used by pods in ns-1
+        topologyKey: kubernetes.io/hostname
+  containers:
+  - name: nginx
+    image: nginx

@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: block-ns-1
+  namespace: ns-1
+spec:
+  podSelector:
+    matchLabels:
+      app: pod-1-lables
+  policyTypes:
+  - Ingress
+  ingress: []
