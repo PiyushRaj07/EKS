@@ -1,0 +1,79 @@
+SNAT for Pods
+
+Pods in the same VPC communicate with each other using these private IP addresses as end points.
+
+
+When a Pod communicates to any IPv4 address that isn't within a CIDR block that's associated to your VPC, the Amazon VPC CNI plugin (for both Linux or Windows) 
+translates the Pod's IPv4 address to the primary private IPv4 address of the primary elastic network interface of the node that the Pod is running on, by default *.
+
+
+
+We recommend deploying nodes to private subnets, whenever possible.
+
+
+VPC using VPC peering, a transit VPC, or AWS Direct Connect can't initiate communication to your Pods behind secondary elastic network interfaces
+
+
+Command to make it possible to connect  communication  between   Pods behind secondary elastic network interfaces to any pods a transit VPC, or AWS Direct Connect
+
+kubectl set env daemonset -n kube-system aws-node AWS_VPC_K8S_CNI_EXTERNALSNAT=true
+
+
+*If a Pod's spec contains hostNetwork=true (default is false), then its IP address isn't translated to a different address.
+This is the case for the kube-proxy and Amazon VPC CNI plugin for Kubernetes Pods that run on your cluster,
+by default. For these Pods, the IP address is the same as the node's primary IP address, so the Pod's IP address isn't translated. 
+For more information about a Pod's hostNetwork setting, see PodSpec v1 core in the Kubernetes API reference.
+
+
+Configure your cluster for Kubernetes network policies
+
+If you have version 1.13 or earlier of the Amazon VPC CNI plugin for Kubernetes on your cluster, 
+Version 1.14 or later of the plugin can implement network policies, so you don't need to use a third party solution. 
+
+
+considerations:
+You can apply multiple network policies to the same Pod.
+you can apply the policies to Amazon EC2 Linux nodes only. 
+You can't apply the policies to Fargate or Windows nodes.
+
+
+Stars demo of network policy
+
+
+
+
+Custom networking for pods
+
+
+By default, when the Amazon VPC CNI plugin for Kubernetes creates 
+secondary elastic network interfaces (network interfaces) for your Amazon EC2 node, 
+it creates them in the same subnet as the node's primary network interface. 
+It also associates the same security groups to the secondary network interface that are associated to the primary network interface. 
+For one or more of the following reasons, you might want the plugin to create secondary network interfaces in a different subnet 
+or want to associate different security groups to the secondary network interfaces, or both:
+
+
+There's a limited number of IPv4 addresses that are available in the subnet that the primary network interface is in. 
+This might limit the number of Pods that you can create in the subnet. 
+By using a different subnet for secondary network interfaces, you can increase the number of available IPv4 addresses available for Pods.
+
+
+For security reasons, your Pods might need to use a different subnet or security groups than the node's primary network interface.
+
+The nodes are configured in public subnets, 
+Pods in private subnets.
+private subnet doesn't include a route to an internet gateway.
+
+Considerations:
+Considerations
+With custom networking enabled, no IP addresses assigned to the primary network interface are assigned to Pods. 
+Only IP addresses from secondary network interfaces are assigned to Pods
+
+ONLY possible for IPV4
+
+Even though Pods deployed to subnets specified for secondary network interfaces can use different 
+subnet and security groups than the node's primary network interface, 
+the subnets and security groups must be in the same VPC as the node.
+
+
+
