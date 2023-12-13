@@ -195,3 +195,104 @@ kubectl exec -it pod-1 -n ns-1 -- apt-get install -y iputils-ping
 
 how to block ns-1 traffice to ns-2
 
+
+
+node-1 : ip-10-0-2-223.ec2.internal
+node-2: ip-10-0-1-249.ec2.internal
+opstree@opstrees-MacBook-Pro EKS % kubectl get pods -A
+NAMESPACE     NAME                      READY   STATUS    RESTARTS   AGE
+kube-system   aws-node-bll69            2/2     Running   0          27m
+kube-system   aws-node-pn9sg            2/2     Running   0          27m
+kube-system   coredns-58488c5db-dhnjm   1/1     Running   0          31m
+kube-system   coredns-58488c5db-vg88v   1/1     Running   0          31m
+kube-system   kube-proxy-l6vcr          1/1     Running   0          27m
+kube-system   kube-proxy-m4kf2          1/1     Running   0          27m
+ns-1          pod-1                     1/1     Running   0          14m
+ns-1          pod-3                     1/1     Running   0          3m11s
+ns-2          pod-2                     1/1     Running   0          12m
+opstree@opstrees-MacBook-Pro EKS % kubectl get pods -n ns-2 
+NAME    READY   STATUS    RESTARTS   AGE
+pod-2   1/1     Running   0          12m
+opstree@opstrees-MacBook-Pro EKS % kubectl get pods -n ns-1  
+NAME    READY   STATUS    RESTARTS   AGE
+pod-1   1/1     Running   0          15m
+pod-3   1/1     Running   0          3m53s
+opstree@opstrees-MacBook-Pro EKS % 
+
+
+check connectivity between nodes:
+run this on pod-1:
+kubectl exec -it pod-1 -n ns-1 -- /bin/bash
+root@pod-1:/# ping 10.0.1.249
+run this on pod-2:
+
+kubectl exec -it pod-2 -n ns-2 -- /bin/bash
+root@pod-1:/# ping 10.0.2.223
+
+
+expected output:
+
+root@pod-2:/# ping 10.0.2.223
+PING 10.0.2.223 (10.0.2.223) 56(84) bytes of data.
+64 bytes from 10.0.2.223: icmp_seq=1 ttl=254 time=0.857 ms
+64 bytes from 10.0.2.223: icmp_seq=2 ttl=254 time=0.859 ms
+
+this proves connection-between node -1 and node-2 pods
+
+
+now lets block the traffic using NetworkPolicy:
+
+
+pod-1---> pod2
+root@pod-1:/# traceroute  10.0.2.191 
+traceroute to 10.0.2.191 (10.0.2.191), 30 hops max, 60 byte packets
+ 1  ip-10-0-1-249.ec2.internal (10.0.1.249)  0.205 ms  0.013 ms  0.005 ms
+ 2  ip-10-0-2-223.ec2.internal (10.0.2.223)  0.938 ms  0.814 ms  0.936 ms
+ 3  ip-10-0-2-191.ec2.internal (10.0.2.191)  0.917 ms  0.900 ms  0.854 ms
+
+inside same namespace: ns-1 to another pod in ns-1
+root@pod-1:/# traceroute  10.0.1.17  
+traceroute to 10.0.1.17 (10.0.1.17), 30 hops max, 60 byte packets
+ 1  ip-10-0-1-249.ec2.internal (10.0.1.249)  0.041 ms  0.007 ms  0.005 ms
+ 2  ip-10-0-1-17.ec2.internal (10.0.1.17)  0.040 ms  0.009 ms  0.008 ms
+
+
+testing ns-2 to ns-1 :
+ 
+ Command : curl -I 10.0.1.98:80 | head -1
+ Result: ----------------------------------
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0   615    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/1.1 200 OK
+
+
+
+Steps to task : 2 block traff
+
+Step 1:
+aws eks --region us-east-1 update-kubeconfig --name AWS-EKS
+
+
+
+Step 2:
+eksctl utils associate-iam-oidc-provider --region us-east-1  --cluster 
+AWS-EKS   --approve
+
+Step 3:
+aws eks update-addon --cluster-name my-cluster --addon-name vpc-cni --addon-version v1.14.0-eksbuild.3 \
+    --service-account-role-arn arn:aws:iam::123456789012:role/AmazonEKSVPCCNIRole \
+    --resolve-conflicts PRESERVE --configuration-values '{"enableNetworkPolicy": "true"}'
+
+
+step4:
+
+kubectl edit configmap -n kube-system amazon-vpc-cni -o yaml
+
+Add the following line to the data in the ConfigMap.
+enable-network-policy-controller: "true"
+
+kubectl edit daemonset -n kube-system aws-node
+make sure:
+     - args:
+        - --enable-network-policy=true

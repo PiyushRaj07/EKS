@@ -1,12 +1,11 @@
-apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
 metadata:
-  name: block-ns-2
+  name: pod-2-lablel-ingress-deny
   namespace: ns-2
 spec:
   podSelector:
     matchLabels:
-      app: pod-2-lables
+      app: pod-2-label
   policyTypes:
   - Ingress
-  ingress: []

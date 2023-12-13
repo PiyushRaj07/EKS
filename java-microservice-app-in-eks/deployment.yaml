@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: java-microservice
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: java-microservice
+    spec:
+      containers:
+      - name: java-microservice-container
+        image: .dkr.ecr.amazonaws.com/:
+        ports:
+        - containerPort: 4567

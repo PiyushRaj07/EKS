@@ -1,0 +1,24 @@
+# Assignment
+1. Pod Networking
+    1. In an EKS cluster, create a pod, pod-1 in a namespace, ns-1
+        1. Determine the IP allocated to this pod
+        2. Determine the pool which the IP is allocated from.
+        3. Predict the subnet from which IP of next pod will be picked in the same namespace
+        4. Create another pod to validate prediction
+        5. Created a deployment in this namespace (replica-3) and validate all pods have IP's from predicted pool.
+        6. Change the pool from which pod IP will be picked. Apply another deployment to validate the pool is changed.
+    2. Create another pod, pod-2 in another namespace, ns-2 with a service
+        1. ns-2 must not use the same worker node as ns-1
+        2. Ping pod-1 from pod-2. Did it go through?
+            1. If yes, block network access from namespace-2 to ns-1
+            2. If no, make sure it goes through by making appropriate config changes.
+        3. How did pod-2 figure out path (hops) to pod-1? Create a flow diagram to show networking components involved in this journey.
+2. Webhook
+    1. Create a namespace, ns-3
+        1. Worker nodes for ns-3 must be separate from ns-1 and ns-2
+        2. ns-3 must not be created if the a number (1, 2, 3 …) is not present in the namespace name.
+3. Host an application on your EKS cluster : https://github.com/opstree/spring3hibernate
+    1. Use separate namespaces for frontend, backend, database
+    2. A pod must not be created if a node selector is not applied to it
+    3. Resources in Frontend and database namespaces must be reachable from each other
+    4. For database pods, use different subnet than allocated by default.

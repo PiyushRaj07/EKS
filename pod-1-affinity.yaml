@@ -1,4 +1,9 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-1
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: pod-1
@@ -7,15 +12,14 @@ metadata:
   namespace: ns-1
 spec:
   affinity:
-    podAntiAffinity:
+    nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchExpressions:
-          - key: app
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-affinity-key
             operator: In
             values:
-            - pod-1-label # Label used by pods in ns-1
-        topologyKey: kubernetes.io/hostname
+            - node-1
   containers:
   - name: nginx
     image: nginx
