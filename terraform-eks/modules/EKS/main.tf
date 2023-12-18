@@ -67,15 +67,15 @@ resource "aws_eks_node_group" "node-grp" {
     source_security_group_ids = [var.eks_security_group_id]
   }
 
-  labels = {
-    env = "Prod"
-  }
+  # Using local.node_labels to set labels for nodes
 
   scaling_config {
     desired_size = 2
     max_size     = 2
     min_size     = 1
   }
+
+
 
   update_config {
     max_unavailable = 1
@@ -90,15 +90,41 @@ resource "aws_eks_addon" "addons" {
   resolve_conflicts = "OVERWRITE"
 }
 
-## null resource for kubectl apply 
-resource "null_resource" "controller_rancher_installation" {
-
+resource "null_resource" "apply_kubectl" {
   provisioner "local-exec" {
-    command = <<EOT
-      echo "Downloading rancher config"
-      git clone git@github.com:PiyushRaj07/EKS.git
-      cd EKS
-      kubectl  apply -f ../spring3hibernatejava
+    command = <<-EOT
+      until kubectl wait --for=condition=Ready node --all; do sleep 5; done
+      kubectl  apply -f ../spring3hibernatejava/mysql/
+      kubectl apply -f ../spring3hibernatejava/app/
+    EOT
+  }
+  
+  # Optionally, you can specify triggers to force re-execution
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+}
+
+resource "null_resource" "label_nodes" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Get the node names in your EKS cluster
+      NODES_STRING=$(kubectl get nodes -o=jsonpath='{.items[*].metadata.name}')
+
+      # Counter variable
+      count=1
+
+      # Iterate over each node directly
+      for node in $NODES_STRING; do
+        echo "Node: $node"
+        echo "Count: $count"  # Debug statement
+        # Apply label to the current node for ns-$count
+        kubectl label nodes "$node" ns=ns-$count --overwrite
+        # Increment the counter
+        ((count++))
+      done
+
     EOT
   }
 }
+
