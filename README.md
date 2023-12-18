@@ -188,12 +188,38 @@ check connectivity:
 # From pod-2 in namespace ns-2, try to connect to a service running in pod-1
 kubectl exec -it pod-2 -n ns-2 -- nc -zv <pod-1-IP-address> 80
 
-in case there is no ping utility
+in case there is no ping utility and curl
 kubectl exec -it pod-1 -n ns-1 -- apt-get update
 kubectl exec -it pod-1 -n ns-1 -- apt-get install -y iputils-ping
-
+kubectl exec -it pod-1 -n ns-1 apt install curl
 
 how to block ns-1 traffice to ns-2
+
+# launch sample app
+kubectl run my-shell --rm -i --tty --image ubuntu -n backend  -- /bin/bash 
+
+
+
+# install telnet 
+
+apt install telnetd -y
+
+
+## mysql login 
+apt install mysql-server
+mysql --version
+
+## mysql 
+
+mysql -u mysql -ppasswd1 -h 10.0.2.191 employeedb 
+
+
+## mysql  login form other pod to check connection 
+mysql -u root -ppasswd1 -h mysql.database employeedb
+
+## 
+
+kubectl run -it --rm --image=mysql:8.0 -n database --restart=Never mysql-client  -- mysql -h mysql  -ppasswd1
 
 
 
@@ -296,3 +322,157 @@ kubectl edit daemonset -n kube-system aws-node
 make sure:
      - args:
         - --enable-network-policy=true
+
+
+aws ecr get-login-password \
+        --region us-east-1 | docker login \
+        --username AWS \
+        --password-stdin 943330243877.dkr.ecr.us-east-1.amazonaws.com
+        
+
+brew install docker-buildx       
+        
+docker buildx build --platform linux/amd64 -t hello-world-java:v1 .
+
+docker tag hello-world-java:v1 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+
+docker tag hello-world-java:v1  943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+
+docker push 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+docker push 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+
+
+aws ecr get-login-password --region <region>| docker login --username <username> --password-stdin <account_number>.dkr.ecr.<region>.amazonaws.com
+
+
+aws ecr get-login-password \
+        --region us-east-1 | docker login \
+        --username AWS \
+        --password-stdin 943330243877.dkr.ecr.us-east-1.amazonaws.com
+
+
+
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam_policy.json
+
+
+eksctl create iamserviceaccount \
+  --cluster=AWS-EKS \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name AmazonEKSLoadBalancerControllerRole \
+  --attach-policy-arn=arn:aws:iam::943330243877:policy/AWSLoadBalancerControllerIAMPolicy \
+  --approve
+
+
+-----Pod Discovery:-----------
+Pod-2 needs to discover the IP address of Pod-1. This can be done through the Kubernetes Service Discovery mechanism.
+
+DNS Resolution:
+The Pod-2 queries the Kubernetes DNS service to resolve the hostname of Pod-1 to its IP address. In Kubernetes, each service gets a DNS entry in the form of <service-name>.<namespace>.svc.cluster.local. So, if Pod-1 is part of the same namespace as Pod-2, Pod-2 can resolve Pod-1's IP address using its hostname.
+
+Network Routing:
+Once the IP address of Pod-1 is resolved, Pod-2 sends network packets to Pod-1's IP address. The network routing is handled by the underlying container network or network overlay solution used in the Kubernetes cluster.
+
+Overlay Network (Optional):
+If the cluster is using an overlay network (e.g., Flannel, Calico, or others), the network packets between Pod-1 and Pod-2 may traverse through the overlay network. These overlay networks create a virtual network that spans across the nodes in the cluster.
+
+Node-to-Node Communication:
+The network packets move between the nodes where Pod-1 and Pod-2 are running. This inter-node communication is facilitated by the underlying networking infrastructure of the cluster.
+
+Pod Networking:
+Finally, the network packets reach the node where Pod-1 is running, and they are delivered to Pod-1 through the Pod's networking interface.
+
+Here's a simplified flow diagram:
+
+                    +------------------+
+                    | DNS Resolution   |
+                    +------------------+
+                               |
+                               v
+                    +------------------+
+                    |  Network Routing |
+                    +------------------+
+                               |
+                               v
+                    +------------------+
+                    | Overlay Network  |
+                    +------------------+
+                               |
+                               v
+                    +------------------+
+                    | Inter-Node       |
+                    | Communication    |
+                    +------------------+
+                               |
+                               v
+                    +------------------+
+                    | Pod Networking   |
+                    +------------------+
+
+
+----------------Host java 3 tier applications ----------
+aws eks --region us-east-1 update-kubeconfig --name AWS-EKS
+
+
+
+eksctl utils associate-iam-oidc-provider --region us-east-1  --cluster 
+AWS-EKS   --approve
+
+terraform-eks % kubectl get nodes
+
+NAME                         STATUS   ROLES    AGE    VERSION
+ip-10-0-1-245.ec2.internal   Ready    <none>   111m   v1.28.3-eks-e71965b
+ip-10-0-2-223.ec2.internal   Ready    <none>   111m   v1.28.3-eks-e71965b
+ip-10-0-2-86.ec2.internal    Ready    <none>   3m3s   v1.28.3-eks-e71965b
+
+
+in case minikube:
+kubectl taint nodes control_panel key1=value1:NoSchedule 
+ignore for eks:
+
+
+how to check if its working:
+https://medium.com/@aaloktrivedi/using-kubernetes-to-deploy-a-3-tier-containerized-application-infrastructure-9fbbbbc85ff6
+
+
+
+
+
+--------java app----
+
+
+
+kubectl label nodes ip-10-0-1-245.ec2.internal frontend
+error: at least one label update is required
+opstree@opstrees-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-1-245.ec2.internal app=frontend
+node/ip-10-0-1-245.ec2.internal labeled
+opstree@opstrees-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-2-223.ec2.internal app=backend 
+node/ip-10-0-2-223.ec2.internal labeled
+opstree@opstrees-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-2-86.ec2.internal app=database
+
+
+kubectl get nodes --show-labels
+
+### how to predict ip range of pod 
+The network is configured with weave.
+ Check the weave pods logs using the command kubectl logs <weave-pod-name> weave -n kube-system and look for ipalloc-range.
+
+ kubectl logs weave-net-b62dl weave -n kube-system | grep 'ipalloc-range'
+
+
+ ## Taint vs affinity
+ it promises that only pod with tolerance can be scheduled on the node:
+
+ ie let say we put taint on node-1 =Blue
+ and tolerance on pod-1= Blue 
+
+ pod-1 can we scheduled at node-1
+
+ but the catch is it can go to other nodes as well
+ but node-1 will not accept any other pod without tolerance 
+
+## Affinity 
+if want pod-1 to be scheduled only on node-1 then we should use affinity which will force pod-1 to scheduled at Node-1 only.
+

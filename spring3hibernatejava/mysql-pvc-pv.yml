@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc1
+  namespace: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 05Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv1
+  namespace: database
+spec:
+  capacity:
+    storage: 05Gi
+  storageClassName: gp2
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /  # Replace with your actual host path

@@ -2,7 +2,6 @@
 resource "aws_eks_cluster" "eks" {
   name     = "AWS-EKS"
   role_arn = var.master_arn
-
   vpc_config {
     subnet_ids = [var.public_subnet_az1_id, var.public_subnet_az2_id]
   }
@@ -80,5 +79,26 @@ resource "aws_eks_node_group" "node-grp" {
 
   update_config {
     max_unavailable = 1
+  }
+}
+
+resource "aws_eks_addon" "addons" {
+  for_each          = { for addon in var.addons : addon.name => addon }
+  cluster_name      = aws_eks_cluster.eks.id
+  addon_name        = each.value.name
+  addon_version     = each.value.version
+  resolve_conflicts = "OVERWRITE"
+}
+
+## null resource for kubectl apply 
+resource "null_resource" "controller_rancher_installation" {
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "Downloading rancher config"
+      git clone git@github.com:PiyushRaj07/EKS.git
+      cd EKS
+      kubectl  apply -f ../spring3hibernatejava
+    EOT
   }
 }

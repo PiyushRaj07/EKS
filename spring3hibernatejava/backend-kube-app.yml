@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-loadbalancer-service
+  namespace: backend
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080  # Adjust this to the actual port your backend app is running on
+  selector:
+    app: java-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app-deployment
+  namespace: backend
+spec:
+  selector:
+    matchLabels:
+      app: java-app
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: java-app
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - backend 
+      containers:
+      - name: java-microservice-container
+        image: 943330243877.dkr.ecr.us-east-1.amazonaws.com/opstree/spring3hibernate:latest
+        ports:
+        - containerPort: 8080

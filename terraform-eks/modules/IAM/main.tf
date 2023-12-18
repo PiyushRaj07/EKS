@@ -122,3 +122,15 @@ resource "aws_iam_instance_profile" "worker" {
   name       = "EKS-worker-node-profile"
   role       = aws_iam_role.worker.name
 }
+
+
+# Attaching Policy to IAM role
+resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicyCSI" {
+  policy_arn = aws_iam_policy.worker_policy_csi.arn
+  role       = aws_iam_role.worker.name
+}
+
+resource "aws_iam_policy" "worker_policy_csi" {
+  name   = "worker_policy_csi"
+  policy = file("/Users/opstree/EKS/terraform-eks/modules/IAM/iam_csi_driver_policy.json")  # Assuming both files are in the same directory
+}
