@@ -13,7 +13,7 @@ aws eks --region us-east-1 update-kubeconfig --name my-custom-networking-cluster
 
 Step 1: get node 
 
-opstree@opstrees-MacBook-Pro ~ % kubectl get no  -o wide
+piyush@piyush-MacBook-Pro ~ % kubectl get no  -o wide
 
 output:
 NAME                         STATUS   ROLES    AGE   VERSION               INTERNAL-IP   EXTERNAL-IP      OS-IMAGE         KERNEL-VERSION                  CONTAINER-RUNTIME
@@ -24,7 +24,7 @@ ip-10-0-2-145.ec2.internal   Ready    <none>   25m   v1.28.3-eks-e71965b   10.0.
 ##cretae namespace:kubectl create namespace ns-1
 
 create pod1:
-opstree@opstrees-MacBook-Pro ~ % cat pod-1.yaml 
+piyush@piyush-MacBook-Pro ~ % cat pod-1.yaml 
 apiVersion: v1
 kind: Pod
 metadata:
@@ -41,7 +41,7 @@ spec:
 ##command to check ip address of pod individual:
 
 ie 
-opstree@opstrees-MacBook-Pro ~ % kubectl get pod -o wide -n ns-1
+piyush@piyush-MacBook-Pro ~ % kubectl get pod -o wide -n ns-1
 NAME    READY   STATUS    RESTARTS   AGE   IP           NODE                         NOMINATED NODE   READINESS GATES
 pod-1   1/1     Running   0          15m   10.0.2.198   ip-10-0-2-112.ec2.internal   <none>           <none>
 pod-3   1/1     Running   0          40m   10.0.1.42    ip-10-0-1-140.ec2.internal   <none>           <none>
@@ -81,7 +81,7 @@ check association:
 aws ec2 describe-vpcs --vpc-ids $vpc_id --query 'Vpcs[*].CidrBlockAssociationSet[*].{CIDRBlock: CidrBlock, State: CidrBlockState.State}' --out table
 
 }
-opstree@opstrees-MacBook-Pro ~ % aws ec2 describe-vpcs --vpc-ids $vpc_id --query 'Vpcs[*].CidrBlockAssociationSet[*].{CIDRBlock: CidrBlock, State: CidrBlockState.State}' --out table
+piyush@piyush-MacBook-Pro ~ % aws ec2 describe-vpcs --vpc-ids $vpc_id --query 'Vpcs[*].CidrBlockAssociationSet[*].{CIDRBlock: CidrBlock, State: CidrBlockState.State}' --out table
 
 ----------------------------------
 |          DescribeVpcs          |
@@ -116,13 +116,13 @@ new_subnet_id_2=$(aws ec2 create-subnet --vpc-id $vpc_id --availability-zone $az
 aws ec2 describe-subnets --filters "Name=vpc-id,Values=$vpc_id" \
     --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' \
     --output table
-opstree@opstrees-MacBook-Pro ~ % new_subnet_id_1=$(aws ec2 create-subnet --vpc-id $vpc_id --availability-zone $az_1 --cidr-block 192.168.1.0/27 \
+piyush@piyush-MacBook-Pro ~ % new_subnet_id_1=$(aws ec2 create-subnet --vpc-id $vpc_id --availability-zone $az_1 --cidr-block 192.168.1.0/27 \
     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=my-eks-custom-networking-vpc-PrivateSubnet01},{Key=kubernetes.io/role/internal-elb,Value=1}]' \
     --query Subnet.SubnetId --output text)
 new_subnet_id_2=$(aws ec2 create-subnet --vpc-id $vpc_id --availability-zone $az_2 --cidr-block 192.168.1.32/27 \
     --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=my-eks-custom-networking-vpc-PrivateSubnet02},{Key=kubernetes.io/role/internal-elb,Value=1}]' \
     --query Subnet.SubnetId --output text)
-opstree@opstrees-MacBook-Pro ~ % aws ec2 describe-subnets --filters "Name=vpc-id,Values=$vpc_id" \
+piyush@piyush-MacBook-Pro ~ % aws ec2 describe-subnets --filters "Name=vpc-id,Values=$vpc_id" \
     --query 'Subnets[*].{SubnetId: SubnetId,AvailabilityZone: AvailabilityZone,CidrBlock: CidrBlock}' \
     --output table
 
@@ -188,6 +188,9 @@ check connectivity:
 # From pod-2 in namespace ns-2, try to connect to a service running in pod-1
 kubectl exec -it pod-2 -n ns-2 -- nc -zv <pod-1-IP-address> 80
 
+
+ java-app-deployment-58979bd987-h7q9
+
 in case there is no ping utility and curl
 kubectl exec -it pod-1 -n ns-1 -- apt-get update
 kubectl exec -it pod-1 -n ns-1 -- apt-get install -y iputils-ping
@@ -211,7 +214,7 @@ mysql --version
 
 ## mysql 
 
-mysql -u mysql -ppasswd1 -h 10.0.2.191 employeedb 
+mysql -u mysql -ppasswd1 -h 10.0.2.227 employeedb 
 
 
 ## mysql  login form other pod to check connection 
@@ -225,7 +228,7 @@ kubectl run -it --rm --image=mysql:8.0 -n database --restart=Never mysql-client 
 
 node-1 : ip-10-0-2-223.ec2.internal
 node-2: ip-10-0-1-249.ec2.internal
-opstree@opstrees-MacBook-Pro EKS % kubectl get pods -A
+piyush@piyush-MacBook-Pro EKS % kubectl get pods -A
 NAMESPACE     NAME                      READY   STATUS    RESTARTS   AGE
 kube-system   aws-node-bll69            2/2     Running   0          27m
 kube-system   aws-node-pn9sg            2/2     Running   0          27m
@@ -236,14 +239,14 @@ kube-system   kube-proxy-m4kf2          1/1     Running   0          27m
 ns-1          pod-1                     1/1     Running   0          14m
 ns-1          pod-3                     1/1     Running   0          3m11s
 ns-2          pod-2                     1/1     Running   0          12m
-opstree@opstrees-MacBook-Pro EKS % kubectl get pods -n ns-2 
+piyush@piyush-MacBook-Pro EKS % kubectl get pods -n ns-2 
 NAME    READY   STATUS    RESTARTS   AGE
 pod-2   1/1     Running   0          12m
-opstree@opstrees-MacBook-Pro EKS % kubectl get pods -n ns-1  
+piyush@piyush-MacBook-Pro EKS % kubectl get pods -n ns-1  
 NAME    READY   STATUS    RESTARTS   AGE
 pod-1   1/1     Running   0          15m
 pod-3   1/1     Running   0          3m53s
-opstree@opstrees-MacBook-Pro EKS % 
+piyush@piyush-MacBook-Pro EKS % 
 
 
 check connectivity between nodes:
@@ -332,6 +335,8 @@ aws ecr get-login-password \
 
 brew install docker-buildx       
         
+## docker push commands
+
 docker buildx build --platform linux/amd64 -t hello-world-java:v1 .
 
 docker tag hello-world-java:v1 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
@@ -446,11 +451,11 @@ https://medium.com/@aaloktrivedi/using-kubernetes-to-deploy-a-3-tier-containeriz
 
 kubectl label nodes ip-10-0-1-245.ec2.internal frontend
 error: at least one label update is required
-opstree@opstrees-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-1-245.ec2.internal app=frontend
+piyush@piyush-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-1-245.ec2.internal app=frontend
 node/ip-10-0-1-245.ec2.internal labeled
-opstree@opstrees-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-2-223.ec2.internal app=backend 
+piyush@piyush-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-1-202.ec2.internal  app=backend 
 node/ip-10-0-2-223.ec2.internal labeled
-opstree@opstrees-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-2-86.ec2.internal app=database
+piyush@piyush-MacBook-Pro spring3hibernate % kubectl label nodes ip-10-0-2-83.ec2.internal app=database
 
 
 kubectl get nodes --show-labels
@@ -476,3 +481,8 @@ The network is configured with weave.
 ## Affinity 
 if want pod-1 to be scheduled only on node-1 then we should use affinity which will force pod-1 to scheduled at Node-1 only.
 
+
+
+### docker 
+ sudo chmod 666 /var/run/docker.sock
+ Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock:

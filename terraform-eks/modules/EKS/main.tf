@@ -1,3 +1,4 @@
+
 # Creating EKS Cluster
 resource "aws_eks_cluster" "eks" {
   name     = "AWS-EKS"
@@ -38,7 +39,9 @@ output "example_output" {
 
 # Creating kubectl server
 resource "aws_instance" "kubectl-server" {
-  ami                         = data.aws_ami.amazon_linux_2.id
+  ami                         = "ami-0df88a6d3d96762e8"
+  #"ami-079db87dc4c10ac91"
+  #"data.aws_ami.amazon_linux_2.id
   key_name                    = var.key_name
   instance_type               = var.instance_size
   associate_public_ip_address = true
@@ -52,35 +55,6 @@ resource "aws_instance" "kubectl-server" {
   }
 }
 
-# Creating Worker Node Group
-resource "aws_eks_node_group" "node-grp" {
-  cluster_name    = aws_eks_cluster.eks.name
-  node_group_name = "Worker-Node-Group"
-  node_role_arn   = var.worker_arn
-  subnet_ids      = [var.public_subnet_az1_id, var.public_subnet_az2_id]
-  capacity_type   = "ON_DEMAND"
-  disk_size       = 20
-  instance_types  = [var.instance_size]
-
-  remote_access {
-    ec2_ssh_key               = var.key_name
-    source_security_group_ids = [var.eks_security_group_id]
-  }
-
-  # Using local.node_labels to set labels for nodes
-
-  scaling_config {
-    desired_size = 2
-    max_size     = 2
-    min_size     = 1
-  }
-
-
-
-  update_config {
-    max_unavailable = 1
-  }
-}
 
 resource "aws_eks_addon" "addons" {
   for_each          = { for addon in var.addons : addon.name => addon }
@@ -90,41 +64,177 @@ resource "aws_eks_addon" "addons" {
   resolve_conflicts = "OVERWRITE"
 }
 
-resource "null_resource" "apply_kubectl" {
-  provisioner "local-exec" {
-    command = <<-EOT
-      until kubectl wait --for=condition=Ready node --all; do sleep 5; done
-      kubectl  apply -f ../spring3hibernatejava/mysql/
-      kubectl apply -f ../spring3hibernatejava/app/
-    EOT
+
+###----------------###
+# Create a launch template for your worker nodes
+resource "aws_launch_template" "eks_node_group" {
+  name_prefix   = "eks-node-group-template-"
+  image_id      = "ami-0df88a6d3d96762e8"
+  instance_type = var.instance_size
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size = 20
+      volume_type = "gp2"
+    }
   }
+  user_data = base64encode(<<-EOF
+    #!/bin/bash
+    cat > /tmp/cwagent-config.json <<EOL
+    {
+      "agent": {
+        "debug": true,
+        "metrics_collection_interval": 60,
+        "logfile": "/var/log/amazon-cloudwatch-agent/amazon-cloudwatch-agent.log"
+      },
+      "metrics": {
+        "namespace": "CustomNamespace",
+        "aggregation_dimensions": [["AutoScalingGroupName"]],
+        "metrics_collected": {
+          "disk": {
+            "measurement": [
+              "used_percent",
+              "inodes_free"
+            ],
+            "metrics_collection_interval": 60,
+            "resources": [
+              "*"
+            ],
+            "ignore_file_system_types": ["sysfs", "devtmpfs", "tracefs", "tmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+          },
+          "mem": {
+            "measurement": [
+              "mem_used_percent"
+            ],
+            "metrics_collection_interval": 60
+          }
+        }
+      }
+    }
+
+    EOL
+    sudo yum install -y amazon-cloudwatch-agent && 
+    sudo cp -f  /tmp/cwagent-config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json &&
+    sudo systemctl enable amazon-cloudwatch-agent &&
+    sudo systemctl start amazon-cloudwatch-agent  &&
+    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a start
+    # Bootstrap commands for EKS worker nodes
+    /etc/eks/bootstrap.sh AWS-EKS
+  EOF
+  )
   
-  # Optionally, you can specify triggers to force re-execution
-  triggers = {
-    always_run = "${timestamp()}"
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = {
+      Name = "EKS-MANAGED-NODE"
+    }
   }
 }
+#        "aggregation_dimensions" : "[["AutoScalingGroupName"], ["InstanceId", "InstanceType"]]",
+#            "ignore_file_system_types": ["sysfs", "devtmpfs", "tracefs","tmpfs","devfs", "iso9660", "overlay", "aufs", "squashfs"]
 
-resource "null_resource" "label_nodes" {
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Get the node names in your EKS cluster
-      NODES_STRING=$(kubectl get nodes -o=jsonpath='{.items[*].metadata.name}')
+# Create an Auto Scaling group for your node group
+#resource "aws_autoscaling_group" "eks_node_group" {
+#  name_prefix                 = "eks-node-group-"
+#  max_size                    = 4
+#  min_size                    = 1
+#  desired_capacity            = 2
+#  # Auto Scaling group configuration...
+#
+#  # Attach the launch template
+#  launch_template {
+#    id      = aws_launch_template.eks_node_group.id
+#    version = "$Latest"
+#  }
+# # Attach the Auto Scaling group to your EKS cluster
+#  vpc_zone_identifier = [var.public_subnet_az1_id, var.public_subnet_az2_id]
+#}
 
-      # Counter variable
-      count=1
 
-      # Iterate over each node directly
-      for node in $NODES_STRING; do
-        echo "Node: $node"
-        echo "Count: $count"  # Debug statement
-        # Apply label to the current node for ns-$count
-        kubectl label nodes "$node" ns=ns-$count --overwrite
-        # Increment the counter
-        ((count++))
-      done
 
-    EOT
+# Define a custom metric for memory utilization
+resource "aws_cloudwatch_metric_alarm" "high_memory_utilization" {
+  alarm_name          = "HighMemoryUtilization"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "mem_used_percent" # Custom metric name
+  statistic          = "Average"
+  namespace           = "CustomNamespace" 
+  period              = 300
+  threshold           = 30
+
+  dimensions = {
+    AutoScalingGroupName = aws_eks_node_group.node-grp.resources[0].autoscaling_groups[0].name
   }
+
+  alarm_description = "Trigger a scale-out if memory utilization exceeds 80%."
+  alarm_actions     = [aws_autoscaling_policy.scale_out.arn]
 }
 
+
+resource "aws_cloudwatch_metric_alarm" "high_cpu_utilization" {
+  alarm_name          = "HighCPUUtilization"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300  # 5 minutes
+  statistic           = "Average"
+  threshold           = 80   # Trigger when CPU utilization is greater than or equal to 80%
+
+  dimensions = {
+    AutoScalingGroupName = aws_eks_node_group.node-grp.resources[0].autoscaling_groups[0].name
+  }
+
+  alarm_description = "Trigger a scale-out if CPU utilization exceeds 80%."
+  alarm_actions     = [aws_autoscaling_policy.scale_out.arn]  # Replace with the actual action
+}
+
+
+# Define an Auto Scaling policy for scaling out
+resource "aws_autoscaling_policy" "scale_out" {
+  name                   = "scale_out_policy"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 300
+  autoscaling_group_name = aws_eks_node_group.node-grp.resources[0].autoscaling_groups[0].name
+}
+
+# Define an Auto Scaling policy for scaling in (optional but recommended)
+resource "aws_autoscaling_policy" "scale_in" {
+  name                   = "scale_in_policy"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 300
+  autoscaling_group_name = aws_eks_node_group.node-grp.resources[0].autoscaling_groups[0].name
+}
+
+# Creating Worker Node Group
+resource "aws_eks_node_group" "node-grp" {
+  cluster_name    = aws_eks_cluster.eks.name
+  node_group_name = "Worker-Node-Group"
+  node_role_arn   = var.worker_arn
+  subnet_ids      = [var.public_subnet_az1_id, var.public_subnet_az2_id]
+  capacity_type   = "ON_DEMAND"
+
+ # instance_types  = [var.instance_size]
+
+  # Using local.node_labels to set labels for nodes
+  scaling_config {
+    min_size     = 1
+    max_size     = 4
+    desired_size = 2
+  }
+
+
+  # Attach the launch template
+  launch_template {
+    id      = aws_launch_template.eks_node_group.id
+    version = "$Latest"
+  }
+
+  update_config {
+    max_unavailable = 1
+  }
+}

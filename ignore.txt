@@ -36,7 +36,4 @@
 
    Custom CNI 
    3 tier architecture.
-   iam role .
-ie:
-
-user : 
+   iam role 

@@ -43,3 +43,7 @@ module "eks" {
   project_name          = var.project_name
   ami_owners                = var.ami_owners
 }
+
+output "eks_asg_name" {
+  value = module.eks.eks_asg_name
+}

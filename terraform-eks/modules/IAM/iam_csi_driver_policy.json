@@ -140,6 +140,32 @@
                     "ec2:ResourceTag/ebs.csi.aws.com/cluster": "true"
                 }
             }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:PutMetricData",
+                "logs:PutLogEvents",
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup",
+                "ec2:DescribeInstances",
+                "ec2:DescribeTags"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:CreateAssociation",
+                "ssm:CreateDocument",
+                "ssm:DeleteDocument",
+                "ssm:DescribeAssociation",
+                "ssm:DescribeDocument",
+                "ssm:GetDocument",
+                "ssm:ListAssociations",
+                "ssm:UpdateAssociationStatus"
+            ],
+            "Resource": "*"
         }
     ]
 }
