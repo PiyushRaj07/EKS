@@ -19,9 +19,8 @@ Running these four stages ensures the integrity of the terraform configurations.
 #### Step 1: Clone this repository.
 
 ```shell
-git@github.com:aws-samples/aws-codepipeline-terraform-cicd-samples.git
+git clone $repo
 ```
-Note: If you don't have git installed, [install git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 
 #### Step 2: Update the variables in `examples/terraform.tfvars` based on your requirement. Make sure you ae updating the variables project_name, environment, source_repo_name, source_repo_branch, create_new_repo, stage_input and build_projects.
