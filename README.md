@@ -330,7 +330,7 @@ make sure:
 aws ecr get-login-password \
         --region us-east-1 | docker login \
         --username AWS \
-        --password-stdin 943330243877.dkr.ecr.us-east-1.amazonaws.com
+        --password-stdin {{account}}.dkr.ecr.us-east-1.amazonaws.com
         
 
 brew install docker-buildx       
@@ -339,12 +339,12 @@ brew install docker-buildx
 
 docker buildx build --platform linux/amd64 -t hello-world-java:v1 .
 
-docker tag hello-world-java:v1 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+docker tag hello-world-java:v1 {{account}}.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
 
-docker tag hello-world-java:v1  943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+docker tag hello-world-java:v1  {{account}}.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
 
-docker push 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
-docker push 943330243877.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+docker push {{account}}.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
+docker push {{account}}.dkr.ecr.us-east-1.amazonaws.com/java-web-app:v1
 
 
 aws ecr get-login-password --region <region>| docker login --username <username> --password-stdin <account_number>.dkr.ecr.<region>.amazonaws.com
@@ -353,7 +353,7 @@ aws ecr get-login-password --region <region>| docker login --username <username>
 aws ecr get-login-password \
         --region us-east-1 | docker login \
         --username AWS \
-        --password-stdin 943330243877.dkr.ecr.us-east-1.amazonaws.com
+        --password-stdin {{account}}.dkr.ecr.us-east-1.amazonaws.com
 
 
 
@@ -367,7 +367,7 @@ eksctl create iamserviceaccount \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
   --role-name AmazonEKSLoadBalancerControllerRole \
-  --attach-policy-arn=arn:aws:iam::943330243877:policy/AWSLoadBalancerControllerIAMPolicy \
+  --attach-policy-arn=arn:aws:iam::{{account}}:policy/AWSLoadBalancerControllerIAMPolicy \
   --approve
 
 

@@ -131,6 +131,7 @@ resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicyCSI" {
 }
 
 resource "aws_iam_policy" "worker_policy_csi" {
+  path        = "/"
   name   = "worker_policy_csi"
-  policy = file("/Users/opstree/EKS/terraform-eks/modules/IAM/iam_csi_driver_policy.json")  # Assuming both files are in the same directory
+  policy = file("modules/IAM/iam_csi_driver_policy.json")  # Assuming both files are in the same directory
 }
