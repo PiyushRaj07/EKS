@@ -136,7 +136,7 @@ resource "aws_iam_policy" "codepipeline_policy" {
                 "iam:CreateRole",
                 "iam:GetRole",
                 "iam:ListRoles",
-                "iam:UpdateRole"
+                "iam:*"
             ],
             "Resource": "*"
     },
@@ -154,6 +154,16 @@ resource "aws_iam_policy" "codepipeline_policy" {
                 "s3:ListBucket",
                 "s3:GetObject",
                 "s3:PutObject"
+            ],
+            "Resource": "*"
+    },
+    {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:*",
+                "eks:*",
+                "autoscaling:*",
+                "cloudwatch:*"
             ],
             "Resource": "*"
     }

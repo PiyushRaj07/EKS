@@ -63,7 +63,7 @@ phases:
     commands:
       - "cd ${CODEBUILD_SRC_DIR}/${CODE_SRC_DIR}"
       - "echo ## TERRAFORM APPLY : Starting with the Terraform Apply"
-      - "terraform apply -input=false tfapply"
+      - "terraform apply -input=false -lock=false tfapply"
       - aws eks --region us-east-1 update-kubeconfig --name AWS-EKS
       - eksctl utils associate-iam-oidc-provider --region us-east-1  --cluster  AWS-EKS   --approve
       # Get node names

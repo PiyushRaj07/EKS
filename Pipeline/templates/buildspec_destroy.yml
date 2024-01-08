@@ -24,7 +24,7 @@ phases:
   build:
     commands:
       - "cd ${CODEBUILD_SRC_DIR}/${CODE_SRC_DIR}"
-      - "terraform destroy --auto-approve"
+      - "terraform destroy -lock=false --auto-approve"
 
 artifacts:
   files:

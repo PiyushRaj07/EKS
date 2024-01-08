@@ -214,23 +214,227 @@ resource "aws_network_acl" "main_network_acl" {
   }
 }
 
+resource "aws_network_acl" "main_network_acl_privateA" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  # Inbound rules - Allow all traffic
+  ingress {
+    protocol   = "-1" # All protocols
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0" # Allow from all IPs
+    from_port  = 0
+    to_port    = 0
+  }
+
+  # Outbound rules - Allow all traffic
+  egress {
+    protocol   = "-1" # All protocols
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0" # Allow to all IPs
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name = "MainNetworkACLPrivateA"
+  }
+}
+
+resource "aws_network_acl" "main_network_acl_privateB" {
+   vpc_id = aws_vpc.eks_vpc.id
+#    # Inbound rules - Allow all traffic
+
+# Inbound rules - Allow all traffic
+  ingress {
+    protocol   = "-1" # All protocols
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0" # Allow from all IPs
+    from_port  = 0
+    to_port    = 0
+  }
+
+  # Outbound rules - Allow all traffic
+  egress {
+    protocol   = "-1" # All protocols
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0" # Allow to all IPs
+    from_port  = 0
+    to_port    = 0
+  }
+
+
+#  # Outbound rules - Allow all traffic
+#  egress {
+#    protocol   = "-1" # All protocols
+#    rule_no    = 100
+#    action     = "allow"
+#    cidr_block = var.private_subnet_az1_cidr
+#    from_port  = 0
+#    to_port    = 0
+#  }
+#    # Outbound rules - Allow all traffic
+#  egress {
+#    protocol   = "-1" # All protocols
+#    rule_no    = 110
+#    action     = "allow"
+#    cidr_block = var.private_subnet_az2_cidr
+#    from_port  = 0
+#    to_port    = 0
+#  }
+#    # Outbound rules - Allow all traffic
+#  egress {
+#    protocol   = "-1" # All protocols
+#    rule_no    = 120
+#    action     = "allow"
+#    cidr_block = var.private_2_subnet_az1_cidr
+#    from_port  = 0
+#    to_port    = 0
+#  }
+#    # Outbound rules - Allow all traffic
+#  egress {
+#    protocol   = "-1" # All protocols
+#    rule_no    = 130
+#    action     = "allow"
+#    cidr_block = var.private_2_subnet_az2_cidr
+#    from_port  = 0
+#    to_port    = 0
+#  }
+#  # Outbound rules - Allow all traffi
+#
+   tags = {
+     Name = "MainNetworkACLPrivateB"
+   }
+}
+
+
 # Associate subnets with Network ACL
-resource "aws_network_acl_association" "public_subnet_az1_association" {
-  network_acl_id = aws_network_acl.main_network_acl.id
-  subnet_id      = aws_subnet.public_subnet_az1.id
-}
-
-resource "aws_network_acl_association" "public_subnet_az2_association" {
-  network_acl_id = aws_network_acl.main_network_acl.id
-  subnet_id      = aws_subnet.public_subnet_az2.id
-}
-
 resource "aws_network_acl_association" "private_subnet_az1_association" {
-  network_acl_id = aws_network_acl.main_network_acl.id
+  network_acl_id = aws_network_acl.main_network_acl_privateA.id
   subnet_id      = aws_subnet.private_subnet_az1.id
 }
 
 resource "aws_network_acl_association" "private_subnet_az2_association" {
-  network_acl_id = aws_network_acl.main_network_acl.id
+  network_acl_id = aws_network_acl.main_network_acl_privateB.id
   subnet_id      = aws_subnet.private_subnet_az2.id
 }
+
+resource "aws_network_acl_association" "private_subnet_az3_association" {
+  network_acl_id = aws_network_acl.main_network_acl.id
+  subnet_id      = aws_subnet.private_subnet_az3.id
+}
+
+resource "aws_network_acl_association" "private_subnet_az4_association" {
+  network_acl_id = aws_network_acl.main_network_acl.id
+  subnet_id      = aws_subnet.private_subnet_az4.id
+}
+
+##private subnet 3----------------
+## private subnet task ///
+# Creating Private Subnet AZ1
+resource "aws_subnet" "private_subnet_az3" {
+  vpc_id                  = aws_vpc.eks_vpc.id
+  cidr_block              = var.private_2_subnet_az1_cidr
+  availability_zone       = data.aws_availability_zones.available_zones.names[0]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "private Subnet private_subnet_az3"
+    Env  = var.env
+    Type = var.type
+  }
+}
+
+## Creating private Subnet AZ2
+resource "aws_subnet" "private_subnet_az4" {
+  vpc_id                  = aws_vpc.eks_vpc.id
+  cidr_block              = var.private_2_subnet_az2_cidr
+  availability_zone       = data.aws_availability_zones.available_zones.names[1]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "private Subnet private_subnet_az4"
+    Env  = var.env
+    Type = var.type
+  }
+}
+
+
+# Creating Route Table and add private Route
+resource "aws_route_table" "private_route_table_az3" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw_az1.id
+  }
+
+  tags = {
+    Name = "private 2 Route Table 1"
+    Env  = var.env
+    Type = var.type
+  }
+}
+# Route Table for private subnet in AZ2
+resource "aws_route_table" "private_route_table_az4" {
+  vpc_id = aws_vpc.eks_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw_az2.id
+  }
+
+  tags = {
+    Name = "PrivateRouteTableAZ24"
+  }
+}
+
+
+# Associating  private Subnet in AZ1 to route table
+resource "aws_route_table_association" "private_subnet_az3_route_table_association" {
+  subnet_id      = aws_subnet.private_subnet_az3.id
+  route_table_id = aws_route_table.private_route_table_az3.id
+}
+
+
+# Associating private Subnet in AZ2 to route table
+resource "aws_route_table_association" "private_subnet_az4_route_table_association" {
+  subnet_id      = aws_subnet.private_subnet_az4.id
+  route_table_id = aws_route_table.private_route_table_az4.id
+}
+
+## NAT Gateways for high availability
+#resource "aws_eip" "nat_eip_az3" {
+#  vpc = true
+#}
+#
+#
+#
+#resource "aws_nat_gateway" "nat_gw_az3" {
+#  allocation_id = aws_eip.nat_eip_az3.id
+#  subnet_id     = aws_subnet.public_subnet_az1.id
+#
+#  tags = {
+#    Name = "NATGatewayAZ21"
+#  }
+#}
+#
+#
+#resource "aws_eip" "nat_eip_az4" {
+#  vpc = true
+#}
+#
+#resource "aws_nat_gateway" "nat_gw_az4" {
+#  allocation_id = aws_eip.nat_eip_az4.id
+#  subnet_id     = aws_subnet.public_subnet_az2.id
+#
+#  tags = {
+#    Name = "NATGatewayAZ22"
+#  }
+#}
+#
+#
+

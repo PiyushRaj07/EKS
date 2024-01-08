@@ -23,6 +23,16 @@ output "private_subnet_az2_id" {
   value = aws_subnet.private_subnet_az2.id
 }
 
+# ID of subnet in AZ3-private 
+output "private_subnet_az3_id" {
+  value = aws_subnet.private_subnet_az3.id
+}
+
+# ID of subnet in AZ4-private
+output "private_subnet_az4_id" {
+  value = aws_subnet.private_subnet_az4.id
+}
+
 
 # Internet Gateway ID
 output "internet_gateway" {

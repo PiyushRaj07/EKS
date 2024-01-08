@@ -28,6 +28,14 @@ data:
   mysql_whattowatch.sql: |-
     DROP DATABASE IF EXISTS employeedb;
     CREATE DATABASE employeedb;
+    USE employeedb;
+    CREATE TABLE IF NOT EXISTS Employee (
+    empid INT AUTO_INCREMENT PRIMARY KEY,
+    empname VARCHAR(255) NOT NULL,
+    empaddress VARCHAR(255),
+    salary BIGINT,
+    empAge INT
+    );
 ---
 apiVersion: apps/v1
 kind: Deployment

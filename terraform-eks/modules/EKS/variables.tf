@@ -23,6 +23,25 @@ variable "public_subnet_az2_id" {
   type = string
 }
 
+# private subnet AZ1
+variable "private_subnet_az1_id" {
+  type = string
+}
+
+# private subnet AZ2
+variable "private_subnet_az2_id" {
+  type = string
+}
+# private  subnet AZ1
+variable "private_subnet_az3_id" {
+  type = string
+}
+
+# private subnet AZ2
+variable "private_subnet_az4_id" {
+  type = string
+}
+
 # Security Group 
 variable "eks_security_group_id" {
   type = string

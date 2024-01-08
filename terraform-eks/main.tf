@@ -35,6 +35,10 @@ module "eks" {
   worker_arn            = module.iam.worker_arn
   public_subnet_az1_id  = module.vpc.public_subnet_az1_id
   public_subnet_az2_id  = module.vpc.public_subnet_az2_id
+  private_subnet_az1_id = module.vpc.private_subnet_az1_id
+  private_subnet_az2_id = module.vpc.private_subnet_az2_id
+  private_subnet_az3_id = module.vpc.private_subnet_az3_id
+  private_subnet_az4_id = module.vpc.private_subnet_az4_id
   env                   = var.env
   type                  = var.type
   key_name              = var.key_name

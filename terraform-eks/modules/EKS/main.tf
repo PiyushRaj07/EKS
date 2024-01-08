@@ -1,10 +1,9 @@
-
 # Creating EKS Cluster
 resource "aws_eks_cluster" "eks" {
   name     = "AWS-EKS"
   role_arn = var.master_arn
   vpc_config {
-    subnet_ids = [var.public_subnet_az1_id, var.public_subnet_az2_id]
+    subnet_ids = [var.private_subnet_az4_id, var.private_subnet_az3_id, var.private_subnet_az2_id, var.private_subnet_az1_id  ]
   }
 
   tags = {
@@ -45,7 +44,7 @@ resource "aws_instance" "kubectl-server" {
   key_name                    = var.key_name
   instance_type               = var.instance_size
   associate_public_ip_address = true
-  subnet_id                   = var.public_subnet_az1_id
+  subnet_id                   = var.private_subnet_az1_id
   vpc_security_group_ids      = [var.eks_security_group_id]
 
   tags = {
@@ -131,27 +130,6 @@ resource "aws_launch_template" "eks_node_group" {
     }
   }
 }
-#        "aggregation_dimensions" : "[["AutoScalingGroupName"], ["InstanceId", "InstanceType"]]",
-#            "ignore_file_system_types": ["sysfs", "devtmpfs", "tracefs","tmpfs","devfs", "iso9660", "overlay", "aufs", "squashfs"]
-
-# Create an Auto Scaling group for your node group
-#resource "aws_autoscaling_group" "eks_node_group" {
-#  name_prefix                 = "eks-node-group-"
-#  max_size                    = 4
-#  min_size                    = 1
-#  desired_capacity            = 2
-#  # Auto Scaling group configuration...
-#
-#  # Attach the launch template
-#  launch_template {
-#    id      = aws_launch_template.eks_node_group.id
-#    version = "$Latest"
-#  }
-# # Attach the Auto Scaling group to your EKS cluster
-#  vpc_zone_identifier = [var.public_subnet_az1_id, var.public_subnet_az2_id]
-#}
-
-
 
 # Define a custom metric for memory utilization
 resource "aws_cloudwatch_metric_alarm" "high_memory_utilization" {
@@ -215,7 +193,7 @@ resource "aws_eks_node_group" "node-grp" {
   cluster_name    = aws_eks_cluster.eks.name
   node_group_name = "Worker-Node-Group"
   node_role_arn   = var.worker_arn
-  subnet_ids      = [var.public_subnet_az1_id, var.public_subnet_az2_id]
+  subnet_ids      = [var.private_subnet_az2_id, var.private_subnet_az1_id]
   capacity_type   = "ON_DEMAND"
 
  # instance_types  = [var.instance_size]
