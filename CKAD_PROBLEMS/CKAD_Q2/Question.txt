@@ -1,0 +1,16 @@
+Q:Create a Secret and Attach to pod yellow
+
+
+Sol: 
+1: Create secret : kubectl aaply -f secrets.yaml
+2: Create Pod kubectl apply -f secret-test-container.yaml 
+3: Attached secrets.
+
+
+## how to read secret from pod.
+
+kubectl apply -f read_secret_pod.yaml
+
+kubectl logs $pod_name
+
+### value is passed based64 encoded.

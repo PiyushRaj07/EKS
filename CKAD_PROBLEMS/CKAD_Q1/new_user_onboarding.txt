@@ -1,0 +1,23 @@
+Q:process to create a user and assign him certain permissions.
+in namespace tech, usr name jan
+
+Ans: 
+1: kubectl create namespace tech
+
+2: openssl genrsa -out jan.key 2048
+
+3: openssl req -new -key jan.key -out jan.csr -subj "/CN=employee/O=Dev"
+
+4: openssl x509 -req -in jan.csr -CA ~/.minikube/ca.crt -CAkey ~/.minikube/ca.key -CAcreateserial -out jan.crt -days 500
+
+## consider updating ~/.minikube ---> you cluster location
+
+5: role_user_pod.yaml
+
+6: rolebinding_user_pod.yaml
+
+
+### how to check
+
+kubectl auth can-i  list pod --as=jan -n tech
+

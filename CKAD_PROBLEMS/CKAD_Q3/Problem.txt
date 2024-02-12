@@ -1,0 +1,26 @@
+Q: Sort pv based on  storage capacity
+
+
+## how to iterate through json --->
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: task-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+
+
+=====
+.spec ---> has capacity ---> storage 
+
+so -==>{.spec.capacity.storage}
+k get pv  --sort-by='{.spec.capacity.storage}' >> ext.txt

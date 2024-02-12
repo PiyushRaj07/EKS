@@ -1,0 +1,10 @@
+Q: Create a cluster rorl and clusterrolebinding 
+   Access get watch list pod access the pod 
+
+  - Clusterrole_name: 
+  - Clusterrolebinding
+--  serviceaccount: admin-sa
+
+
+how to test:
+ kubectl auth can-i list pod --as=system:serviceaccount:default:admin-sa

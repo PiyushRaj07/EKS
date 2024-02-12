@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: print-greeting
+spec:
+  containers:
+  - name: grey
+    image: nginx
+    env:
+    - name: grey
+      value: "Warm greetings to"
+    - name: HONORIFIC
+      value: "The Most Honorable"
+    - name: NAME
+      value: "Kubernetes"
+    - name: MESSAGE
+      value: "$(GREETING) $(grey) $(NAME)"
+    command: ["echo"]
+    args: ["$(MESSAGE)"]
