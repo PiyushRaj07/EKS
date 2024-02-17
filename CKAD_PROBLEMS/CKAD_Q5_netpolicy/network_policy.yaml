@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: postgress
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          project: dev-tech
+    - podSelector:
+        matchLabels:
+          type: review
+    ports:
+    - protocol: TCP
+      port: 5978
+

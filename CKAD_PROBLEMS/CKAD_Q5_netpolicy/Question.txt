@@ -1,0 +1,14 @@
+Network policy allow traffic from namespace tech
+and  from all pods with lable type=review 
+to pods with labels app=postgress
+
+### notes: namespace need to be labeled seprately 
+sol: network_policy.yaml
+kubectl lablel namespace/dev-tech  name=dev-tech
+
+
+Q2: Create an nginx deployment of 2 replicas, expose it via a ClusterIP service on port 80. Create a NetworkPolicy so that only pods with labels 'access: granted' can access the deployment and apply it and namespace app
+
+soln: deploy_nginx.yaml
+
+how to test : kubectl run --rm -i -t --image=alpine  test-$RANDOM --labels="access=granted"  -n app  -- sh (should be accessible)
